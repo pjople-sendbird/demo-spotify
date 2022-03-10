@@ -12,7 +12,8 @@ var MESSAGE_LIST = [];
 var MEMBER_LIST = [];
 
 /**
- * http://127.0.0.1:5500/index.html?name=walter&geo=1&size=2
+ * Call this file like:
+ * file://.../index.html?userId=nick&nameNick R&imageUrl=https://...
  */
 function receiveUrlParams() {
     var url_string = (window.location.href);
@@ -33,6 +34,9 @@ function receiveUrlParams() {
     }
 }
 
+/**
+ * Connects to Sendbird!
+ */
 function connect() {
     sb.connect(USER_ID, (user, error) => {
         updateCurrentUser(() => {
@@ -45,6 +49,9 @@ function connect() {
     })
 }
 
+/**
+ * Use Sendbird to update profile picture and more...
+ */
 function updateCurrentUser(callback) {
     if (!IMAGE_URL) callback();
     sb.updateCurrentUserInfo(NAME, IMAGE_URL, (response, error) => {
@@ -52,7 +59,10 @@ function updateCurrentUser(callback) {
     });    
 }
 
-function enterTheChannel(callback) {
+/**
+ * Enter the Open Channel
+ */
+ function enterTheChannel(callback) {
     sb.OpenChannel.getChannel(CHANNEL_URL, (channel, error) => {
         if (error) {
             alert('Error entering the chat!');
@@ -66,6 +76,9 @@ function enterTheChannel(callback) {
     })
 }
 
+/**
+ * Get members from the Open Channel
+ */
 function getAndDrawMemebers() {
     MEMBER_LIST = [];
     var listQuery = SELECTED_CHANNEL.createParticipantListQuery();
@@ -121,6 +134,9 @@ function getMemberAvatar(user) {
     };
 }
 
+/**
+ * Get current messages on the channel
+ */
 function getChannelMessages() {
     var listQuery = SELECTED_CHANNEL.createPreviousMessageListQuery();
     listQuery.limit = 50;
@@ -165,6 +181,9 @@ function drawAdminMessage(text) {
     }, 3000);
 }
 
+/**
+ * Sendbird provides listener to know what's happening on the chnanel
+ */
 
 function listen() {
     var channelHandler = new sb.ChannelHandler();
@@ -188,6 +207,9 @@ function listen() {
     sb.addChannelHandler('UNIQUE_HANDLER_ID', channelHandler);
 }
 
+/**
+ * Send a message with Sendbird
+ */
 function sendMessage() {
     const message = document.getElementById('message');
     if (!message || !message.value || !SELECTED_CHANNEL) return;
@@ -209,6 +231,9 @@ function userStatusChanged() {
 }
 
 
+/**
+ * Helper functions
+ */
 
 function isDJ(user) {
     var role = user.metaData['role'];
@@ -248,6 +273,7 @@ function moveTo(userId) {
     }
 }
 
-
-
+/**
+ * All starts here
+ */
 receiveUrlParams();
