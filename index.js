@@ -230,7 +230,8 @@ function sendMessage() {
 }
 
 /**
- * Send Admin message
+ * Sendbird allows developer to send messages with 
+ * custom fields, such as "customType" and "data"
  */
  function sendStatusMessage(text) {
     const params = new sb.UserMessageParams();
