@@ -158,7 +158,6 @@ function drawMessages() {
 
 function drawMessage(msg) {
     if (!msg) return;
-    if (msg.message == 'userStatusChanged') return;
     const nickname = msg.sender && msg.sender.nickname ? msg.sender.nickname : msg.sender.userId;
     const time = timeAgo(msg.createdAt);
     const out = `
@@ -188,21 +187,20 @@ function drawAdminMessage(text) {
 function listen() {
     var channelHandler = new sb.ChannelHandler();
     channelHandler.onMessageReceived = (channel, message) => {
-        if (message.message == 'userStatusChanged') {
-            getAndDrawMemebers();
-        } else {
-            getChannelMessages();
-        }
+        getChannelMessages();
     }
     channelHandler.onUserEntered = (openChannel, user) => {
         const name = user.nickname ? user.nickname : user.userId;
         drawAdminMessage('User ' + name + ' entered');
-        drawMembers();
+        getAndDrawMemebers();
     }
     channelHandler.onUserExited = (openChannel, user) => {
         const name = user.nickname ? user.nickname : user.userId;
         drawAdminMessage('User ' + name + ' left');
-        drawMembers();
+        getAndDrawMemebers();
+    }
+    channelHandler.onMetadataChanged = () => {
+        getAndDrawMemebers();
     }
     sb.addChannelHandler('UNIQUE_HANDLER_ID', channelHandler);
 }
@@ -222,12 +220,6 @@ function sendMessage() {
             message.value = '';
         }
     });
-}
-
-function userStatusChanged() {
-    const params = new sb.UserMessageParams();
-    params.message = 'userStatusChanged';
-    SELECTED_CHANNEL.sendUserMessage(params, function (userMessage, error) {});
 }
 
 
@@ -262,12 +254,10 @@ function moveTo(userId) {
         if (isDJ(member)) {
             removeAsDJ(member, () => {
                 getAndDrawMemebers();
-                userStatusChanged();                
             })
         } else {
             moveToDJ(member, () => {
                 getAndDrawMemebers();
-                userStatusChanged();
             })
         }
     }
