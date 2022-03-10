@@ -1,3 +1,5 @@
+Our documentation: https://sendbird.com/docs
+
 # demo-spotify
 
 The user status change (from listener to DJ) should be done via user metadata.
