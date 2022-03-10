@@ -76,19 +76,25 @@ function updateCurrentUser(callback) {
     })
 }
 
+function getMembers(callback) {
+    var listQuery = SELECTED_CHANNEL.createParticipantListQuery();
+    listQuery.limit = 100;
+    listQuery.next(function(participantList, error) {
+        if (!error) {
+            callback(participantList);
+        }
+    })
+}
+
 /**
  * Get members from the Open Channel
  */
 function getAndDrawMemebers() {
     MEMBER_LIST = [];
-    var listQuery = SELECTED_CHANNEL.createParticipantListQuery();
-    listQuery.limit = 100;
-    listQuery.next(function(participantList, error) {
-        if (!error) {
-            MEMBER_LIST.push(...participantList);
-            drawMembers();
-        }
-    })    
+    getMembers((participantList) => {
+        MEMBER_LIST = participantList;
+        drawMembers();
+    })
 }
 
 function drawMembers() {
@@ -117,7 +123,7 @@ function getMemberAvatar(user) {
     const pointerClass = user.userId == sb.currentUser.userId ? 'pointer' : '';
     const avatarClass = isDJ(user) ? 'avatar-dj' : 'avatar-listener';
     const out = `
-    <div class="col-auto avatar text-center" onclick="moveTo('${ user.userId }')">
+    <div class="col-auto avatar text-center" onclick="toggleRole()">
         <div class="avatar">
             <div class="${ avatarClass } ${ pointerClass }">
                 <img src="${ img }" />
@@ -160,9 +166,10 @@ function drawMessage(msg) {
     if (!msg) return;
     const nickname = msg.sender && msg.sender.nickname ? msg.sender.nickname : msg.sender.userId;
     const time = timeAgo(msg.createdAt);
+    const timeAndName = msg.customType && msg.customType == 'statusMessage' ? '' : `${nickname} - <span class="text-muted small">${time}</span>`;
     const out = `
         <div class="pb-3 small">
-            ${nickname} - <span class="text-muted small">${time}</span>
+            ${ timeAndName }
             <div class="text-white">
                 ${msg.message}
             </div>
@@ -187,6 +194,9 @@ function drawAdminMessage(text) {
 function listen() {
     var channelHandler = new sb.ChannelHandler();
     channelHandler.onMessageReceived = (channel, message) => {
+        if (message && message.customType && message.customType == 'statusMessage') {
+            getAndDrawMemebers();
+        }
         getChannelMessages();
     }
     channelHandler.onUserEntered = (openChannel, user) => {
@@ -197,9 +207,6 @@ function listen() {
     channelHandler.onUserExited = (openChannel, user) => {
         const name = user.nickname ? user.nickname : user.userId;
         drawAdminMessage('User ' + name + ' left');
-        getAndDrawMemebers();
-    }
-    channelHandler.onMetadataChanged = () => {
         getAndDrawMemebers();
     }
     sb.addChannelHandler('UNIQUE_HANDLER_ID', channelHandler);
@@ -222,46 +229,48 @@ function sendMessage() {
     });
 }
 
+/**
+ * Send Admin message
+ */
+ function sendStatusMessage(text) {
+    const params = new sb.UserMessageParams();
+    params.message = text;
+    params.customType = 'statusMessage';
+    SELECTED_CHANNEL.sendUserMessage(params, function (userMessage, error) {
+        if (!error) {
+            getChannelMessages();
+            getAndDrawMemebers();
+        }
+    });
+}
+
 
 /**
  * Helper functions
  */
 
+function toggleRole() {
+    const user = sb.currentUser;
+    var role = user.metaData['role'];
+    const newRole = (!role || role == 'Listener' ? 'DJ' : 'Listener')
+    var data = {
+        'role': newRole
+    };    
+    if (role || role == '') {
+        user.updateMetaData(data, (metadata, error) => {
+            sendStatusMessage(user.nickname + ' is now ' + newRole)
+        });    
+    } else {
+        user.createMetaData(data, (metadata, error) => {
+            sendStatusMessage(user.nickname + ' is now ' + newRole)
+        });    
+    }
+}
 function isDJ(user) {
     var role = user.metaData['role'];
     return (role && role == 'DJ')
 }
 
-function moveToDJ(user, callback) {
-    var data = {
-        'role': 'DJ'
-    };    
-    user.createMetaData(data, (metadata, error) => {
-        callback( error == null );
-    });
-}
-
-function removeAsDJ(user, callback) {
-    user.deleteMetaData('role', (metadata, error) => {
-        callback( error == null );
-    });
-}
-
-function moveTo(userId) {
-    if (!MEMBER_LIST) return;
-    const member = MEMBER_LIST.find(i => i.userId == userId);
-    if (member) {
-        if (isDJ(member)) {
-            removeAsDJ(member, () => {
-                getAndDrawMemebers();
-            })
-        } else {
-            moveToDJ(member, () => {
-                getAndDrawMemebers();
-            })
-        }
-    }
-}
 
 /**
  * All starts here
