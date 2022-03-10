@@ -25,18 +25,3 @@ user.deleteMetaData('role', function(response, error) {
     }
 });
 ```
-
-You can also update and get the metadata.
-https://sendbird.com/docs/chat/v3/javascript/guides/user-and-channel-metadata#2-user-metadata
-
-### Events when metadata changes
-You can listen for this and many more events
-
-```
-onMetaDataUpdated(...) {
-   // Update status for user
-}
-
-```
-Learn all about it here: https://sendbird.com/docs/chat/v3/javascript/guides/event-handler#2-add-and-remove-a-channel-event-handler
-
