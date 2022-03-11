@@ -1,3 +1,5 @@
+Check the video first: https://youtu.be/yXmQwWFU8Gk
+
 Our documentation: https://sendbird.com/docs
 
 # demo-spotify
